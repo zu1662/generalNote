@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>chooseFileSystemEntries读取文件列表</title>
+  <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css" />
+  <script src="https://unpkg.com/vue@3"></script>
+  <script src="https://unpkg.com/element-plus"></script>
+  <style>
+    html,
+    body,
+    main {
+      width: 100%;
+      height: 100%;
+      background-color: #fefefe;
+    }
+
+    #app {
+      display: flex;
+    }
+
+    .left {
+      width: 300px;
+    }
+    .right {
+      flex: 1;
+      position: relative;
+    }
+
+    #container {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+  </style>
+</head>
+
+<body>
+  <main id="app">
+    <div class="left">
+      <el-button v-if="folderData.length == 0" @click="handleChooseFolder">选择文件夹</el-button>
+      <el-tree :data="folderData" :props="defaultProps" @node-click="handleNodeClick" />
+    </div>
+    <div class="right">
+      <div id="container"></div>
+    </div>
+  </main>
+  <script>
+    // 递归获取文件目录树
+    async function getFilesRecursively(handle) {
+      let curData = []
+      for await (const [name, fileHandle] of handle.entries()) {
+        let curInfo = { label: name, file: null, children: [] }
+        if (fileHandle.kind == 'file') {
+          // 文件
+          curInfo.file = fileHandle
+        } else if (fileHandle.kind == 'directory' && !name.startsWith('.')) {
+          curInfo.children = await getFilesRecursively(fileHandle)
+        }
+        curData.push(curInfo)
+      }
+      return curData
+    }
+
+    // 读取文件
+    function readFile(filehandle){
+      return new Promise(async (resolve, reject) => {
+        try {
+          const file = await filehandle.getFile();
+          const reader = new FileReader();
+          reader.onload = () => {
+            resolve(reader.result)
+          };
+          reader.readAsText(file); 
+        } catch (error) {
+          reject(error)
+        }
+      })
+    }
+
+    // 保存文件
+    async function saveFile(fileHandle, text){
+      // 创建一个可写流
+      const writable = await fileHandle.createWritable();
+
+      try {
+        // 写入数据
+        await writable.write(text);
+
+        // 关闭流
+        writable.close();
+      } catch (error) {
+        writable.close();
+      }
+    }
+
+    let openId = 'chrome-file-api'
+    let dirHandle
+    const App = {
+      data() {
+        return {
+          defaultProps: {
+            children: 'children',
+            label: 'label',
+          },
+          folderData: []
+        };
+      },
+      methods: {
+        // 选择文件夹
+        async handleChooseFolder() {
+          // 打开文件夹选择器
+          dirHandle = await window.showDirectoryPicker();
+          console.log(dirHandle);
+          // 递归获取文件和目录名称
+          const datas = await getFilesRecursively(dirHandle)
+          this.folderData = datas
+        },
+        async handleNodeClick(node) {
+          const fileHandle = node.file
+          if(!fileHandle) return
+          // 读取文件内容
+          const fileText = await readFile(fileHandle)
+          // 设置内容到编辑器
+          if(window.__monacoEditor) {
+            window.__monacoEditor.setValue(fileText)
+            // 设置下当前文件handle，用户保存文件
+            window.__fileHandle = fileHandle
+          }
+        }
+      }
+    };
+    const app = Vue.createApp(App);
+    app.use(ElementPlus);
+    app.mount("#app");
+  </script>
+</body>
+
+</html>
+<script src="https://unpkg.com/monaco-editor@latest/min/vs/loader.js"></script>
+<script>
+  // 引入 monaco 编辑器
+  require.config({ paths: { 'vs': 'https://unpkg.com/monaco-editor@latest/min/vs' } });
+  window.MonacoEnvironment = { getWorkerUrl: () => proxy };
+
+  let proxy = URL.createObjectURL(new Blob([`
+	self.MonacoEnvironment = {
+		baseUrl: 'https://unpkg.com/monaco-editor@latest/min/'
+	};
+	importScripts('https://unpkg.com/monaco-editor@latest/min/vs/base/worker/workerMain.js');
+`], { type: 'text/javascript' }));
+
+  require(["vs/editor/editor.main"], function () {
+    window.__monacoEditor = monaco.editor.create(document.getElementById('container'), {
+      value: [
+        'function x() {',
+        '\tconsole.log("Hello world!");',
+        '}'
+      ].join('\n'),
+      language: 'javascript',
+      theme: 'vs'
+    });
+
+    //添加按键监听
+    window.__monacoEditor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, function () {
+      console.log('Ctrl + S 保存')
+      const curText = window.__monacoEditor.getValue();
+      if(window.__fileHandle) {
+        saveFile(window.__fileHandle, curText)
+      }
+    })
+  });
+</script>
