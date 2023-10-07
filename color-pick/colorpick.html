@@ -10,28 +10,13 @@
       width: 100%;
       height: 100%;
     }
-    @property --c1 {
-      syntax: '<color>';
-      initial-value: #fff;
-      inherits: false;
-    }
-
-    @property --c2 {
-      syntax: '<color>';
-      initial-value: #fff;
-      inherits: false;
-    }
-    @property --c3 {
-      syntax: '<color>';
-      initial-value: #fff;
-      inherits: false;
-    }
+    
     .container {
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: --c1 3s, --c2 3s;
-      background: linear-gradient(var(--c1), var(--c2));
+      transition: all .5s;
+      background: color-mix(in srgb, var(--c1) 60%, var(--c2) 40%);
     }
 
     .container img {
