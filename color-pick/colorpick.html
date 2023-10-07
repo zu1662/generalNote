@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
+  <title>color-pick</title>
+  <style>
+    html,body,.container {
+      width: 100%;
+      height: 100%;
+    }
+    @property --c1 {
+      syntax: '<color>';
+      initial-value: #fff;
+      inherits: false;
+    }
+
+    @property --c2 {
+      syntax: '<color>';
+      initial-value: #fff;
+      inherits: false;
+    }
+    @property --c3 {
+      syntax: '<color>';
+      initial-value: #fff;
+      inherits: false;
+    }
+    .container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: --c1 3s, --c2 3s;
+      background: linear-gradient(var(--c1), var(--c2));
+    }
+
+    .container img {
+      display: inline-block;
+      margin: 20px;
+      width: 200px;
+      height: 200px;
+      transition: all ease-in-out .3s;
+      border: 0px solid #fff;
+      border-radius: 5px;
+    }
+    .container img:hover {
+      width: 240px;
+      height: 240px;
+      border-width: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container" id="container">
+    <img src="./22222.jpg" alt="">
+    <img src="./风景.jpg" alt="">
+    <img src="./酒店.jpg" alt="">
+    <img src="./shumu.jpg" alt="">
+  </div>
+</body>
+<script>
+  // 初始化颜色提取工具
+  const colorThief = new ColorThief();
+  // 获取对应元素
+  const html = document.documentElement
+  const images = document.getElementsByTagName('img')
+  for (let i = 0; i < images.length; i++) {
+    const img = images[i];
+    // 图片加载完成，执行颜色提取
+    if (img.complete) {
+      const primaryColors = colorThief.getPalette(img, 3);
+      img.primaryColors = primaryColors.map(arr => `rgb(${arr.join(',')})`)
+    } else {
+      img.addEventListener('load', function() {
+        const primaryColors = colorThief.getPalette(img, 3);
+        img.primaryColors = primaryColors.map(arr => `rgb(${arr.join(',')})`)
+      });
+    }
+   // 监听元素进入和离开
+    img.addEventListener('mouseenter', () => {
+      const colors = img.primaryColors
+      html.style.setProperty('--c1', colors[0])
+      html.style.setProperty('--c2', colors[1])
+      html.style.setProperty('--c3', colors[2])
+    })
+    img.addEventListener('mouseleave', () => {
+      html.style.setProperty('--c1', '#fff')
+      html.style.setProperty('--c2', '#fff')
+      html.style.setProperty('--c3', '#fff')
+    })
+  }
+</script>
+</html>
