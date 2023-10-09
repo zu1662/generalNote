@@ -67,7 +67,7 @@ let gutters = reactive(["CodeMirror-linenumbers", "CodeMirror-foldgutter"])
 
 let parsing = ref(false),
   file = ref(""),
-  code = ref("console.log(\"hello 天穹!!!\");\""),
+  code = ref("console.log(\"hello sourcemap parser!!!\");\""),
   fileList = ref([]),
   ruleForm = reactive({
     pos: ''
