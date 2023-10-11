@@ -2,6 +2,8 @@
 
 用于Sourcemap的源码调试, 可以使用 `git pull` 拉取vue3最新代码, 使用 `pnpm install` 安装依赖，使用 `pnpm build`进行编译
 
+由于不需要单元测试相关，可以把 `package.json` 内的 `puppeteer` 依赖删除掉
+
 ## 修改编译配置生成对应的Sourcemap
 
 ```js
