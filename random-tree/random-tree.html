@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>随机树生成</title>
+  <style>
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      margin: 0;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #outside {
+      width: 500px;
+      height: 500px;
+      border: 5px solid #ccc;
+      border-radius: 50%;
+      /* overflow: hidden; */
+      display: flex;
+      align-items: end;
+      justify-content: center;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="outside">
+    <canvas id="canvas"></canvas>
+  </div>
+</body>
+
+</html>
+<script>
+  const canvas = document.getElementById('canvas')
+  const ctx = canvas.getContext("2d");
+
+  const canvasWidth = canvas.width = document.getElementById('outside').clientWidth * 1.5
+  const canvasHeight = canvas.height = document.getElementById('outside').clientHeight * 1.2
+
+  // 绘制中心点移动到中间
+  ctx.translate(canvasWidth / 2, canvasHeight)
+  // Y轴翻转
+  ctx.scale(1, -1);
+
+  generateTrunk([0, 0], 90, 15, canvasHeight / 8)
+
+
+  function fullClose(n, m) {
+    var result = Math.random() * (m + 1 - n) + n;
+    while (result > m) {
+      result = Math.random() * (m + 1 - n) + n;
+    }
+    return result;
+  }
+
+  function calculateEndPoint([x, y], length, angle) {
+    // 将角度转换为弧度  
+    var radians = angle * Math.PI / 180;
+
+    // 计算结束点的坐标  
+    var endX = x + length * Math.cos(radians);
+    var endY = y + length * Math.sin(radians);
+
+    return [endX, endY];
+  }
+
+  // 生成头部花朵
+  function generateFllower(position) {
+    ctx.beginPath();
+    ctx.lineWidth = 2;
+    ctx.arc(position[0], position[1], 5, 0, 2 * Math.PI);
+    ctx.fillStyle = "red";
+    ctx.fill()
+    ctx.closePath();
+  }
+
+  // 生成树干
+  function generateTrunk(position, angle, width, length) {
+
+    if (width < 2 || length < 15) {
+      generateFllower(position)
+      return
+    }
+
+    // 根据其实点位，角度和长度，计算结束点位
+    const endPosition = calculateEndPoint(position, length, angle)
+
+    // 使用canvas进行绘制
+    ctx.beginPath();
+    ctx.lineWidth = width;
+    ctx.strokeStyle = "#333";
+    ctx.moveTo(position[0], position[1]);
+    ctx.lineTo(endPosition[0], endPosition[1]);
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.stroke();
+    ctx.closePath();
+
+    for (let i = 0; i < 2; i++) {
+      generateTrunk(endPosition, angle + (Math.random() - 0.5) * 60, width * fullClose(0.7, 1), length * fullClose(0.6, 1))
+    }
+  }
+</script>
